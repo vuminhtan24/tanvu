@@ -5,7 +5,7 @@ Pillow
 joblib
 numpy
 pydantic
-scikit-learn
+scikit-learn==1.6.1
 torch
 torchvision
 python-multipart
