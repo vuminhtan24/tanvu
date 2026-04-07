@@ -6,7 +6,7 @@ import os
 from routes.chicken import router as chicken_router
 from routes.grade    import router as grade_router
 
-app = FastAPI(title="Vũ Minh Tân — AI Portfolio", version="1.0.0")
+app = FastAPI(title="TanVu — AI Portfolio", version="1.0.0")
 
 # ── Static files ──────────────────────────────────────────────────────────────
 app.mount("/static", StaticFiles(directory="static"), name="static")
