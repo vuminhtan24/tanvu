@@ -8,3 +8,4 @@ pydantic
 scikit-learn
 torch
 torchvision
+python-multipart
