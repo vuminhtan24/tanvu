@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vũ Minh Tân — Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #242424;
+      --accent: #c8f55a;
+      --accent2: #5af5c8;
+      --text: #f0ede6;
+      --muted: #666;
+      --card-bg: #111;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -.5px;
+      color: var(--text);
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: .04em;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 120px 48px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(200,245,90,0.08) 0%, transparent 70%);
+      top: 50%; left: 60%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .hero-glow2 {
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(90,245,200,0.06) 0%, transparent 70%);
+      bottom: 10%; right: 5%;
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp .6s .1s forwards;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 24px; height: 1px;
+      background: var(--accent);
+    }
+
+    .hero-name {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(52px, 8vw, 96px);
+      font-weight: 800;
+      line-height: .95;
+      letter-spacing: -3px;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp .7s .2s forwards;
+    }
+    .hero-name .accent { color: var(--accent); }
+
+    .hero-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 480px;
+      line-height: 1.7;
+      margin-top: 24px;
+      opacity: 0;
+      animation: fadeUp .7s .35s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 14px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp .7s .5s forwards;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: var(--accent);
+      color: #0d0d0d;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(200,245,90,0.25);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-decoration: none;
+      transition: border-color .2s, background .2s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--muted);
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* ── SCROLL INDICATOR ── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeIn 1s 1.2s forwards;
+    }
+    .scroll-hint span { font-size: 10px; letter-spacing: .15em; color: var(--muted); text-transform: uppercase; }
+    .scroll-line {
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, var(--border), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: .3; }
+      50% { opacity: 1; }
+    }
+
+    /* ── PROJECTS SECTION ── */
+    .section {
+      padding: 100px 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 56px;
+      gap: 20px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+    }
+
+    /* ── PROJECT CARDS ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 2px;
+    }
+
+    .project-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 36px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .25s, background .25s;
+      cursor: pointer;
+    }
+    .project-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(200,245,90,0.03) 100%);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .project-card:hover {
+      border-color: rgba(200,245,90,0.3);
+      background: #141414;
+    }
+    .project-card:hover::after { opacity: 1; }
+
+    .project-card:nth-child(2) .proj-icon { background: rgba(90,245,200,0.1); color: var(--accent2); }
+    .project-card:nth-child(2):hover { border-color: rgba(90,245,200,0.3); }
+    .project-card:nth-child(2)::after {
+      background: linear-gradient(135deg, transparent 0%, rgba(90,245,200,0.03) 100%);
+    }
+
+    .proj-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .proj-icon {
+      width: 48px; height: 48px;
+      background: rgba(200,245,90,0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .proj-arrow {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+      transition: border-color .2s, color .2s, transform .2s;
+    }
+    .project-card:hover .proj-arrow {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translate(2px, -2px);
+    }
+    .project-card:nth-child(2):hover .proj-arrow {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .proj-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+    }
+
+    .proj-desc {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .proj-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      color: var(--muted);
+      letter-spacing: .03em;
+    }
+
+    /* ── ABOUT STRIP ── */
+    .about-strip {
+      padding: 80px 48px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .about-left .section-label { margin-bottom: 12px; }
+    .about-left .section-title { font-size: 32px; }
+
+    .about-text {
+      font-size: 16px;
+      font-weight: 300;
+      color: rgba(240,237,230,0.7);
+      line-height: 1.8;
+    }
+
+    .about-text strong { color: var(--text); font-weight: 500; }
+
+    /* ── SKILLS ROW ── */
+    .skills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .skill-chip {
+      font-size: 12px;
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      color: var(--text);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    footer p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer .nav-logo { font-size: 15px; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 24px 80px; }
+      .section { padding: 60px 24px; }
+      .about-strip { grid-template-columns: 1fr; padding: 60px 24px; gap: 32px; }
+      footer { padding: 32px 24px; flex-direction: column; text-align: center; }
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">VMT<span>.</span></div>
+  <div class="nav-links">
+    <a href="#projects">Dự án</a>
+    <a href="#about">Về tôi</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="hero-tag">AI / Machine Learning</div>
+
+  <h1 class="hero-name">
+    Vũ Minh<br><span class="accent">Tân.</span>
+  </h1>
+
+  <p class="hero-sub">
+    Sinh viên đam mê trí tuệ nhân tạo & học máy — 
+    xây dựng những ứng dụng thực tiễn từ mô hình AI.
+  </p>
+
+  <div class="hero-cta">
+    <a href="#projects" class="btn-primary">
+      Xem dự án
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#about" class="btn-secondary">Về tôi</a>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section class="section" id="projects">
+  <div class="section-header">
+    <div>
+      <div class="section-label">AI Projects</div>
+      <h2 class="section-title">Dự án nổi bật</h2>
+    </div>
+  </div>
+
+  <div class="projects-grid">
+
+    <!-- Chicken Disease -->
+    <a href="/chicken" class="project-card">
+      <div class="proj-top">
+        <div class="proj-icon">🐔</div>
+        <div class="proj-arrow">↗</div>
+      </div>
+      <div>
+        <h3 class="proj-title">Chicken Disease Classifier</h3>
+        <p class="proj-desc">
+          Phân tích ảnh phân gà để chẩn đoán bệnh tự động. 
+          Nhận diện 4 loại: Cầu Trùng, Newcastle, Salmonella, và Khỏe mạnh.
+        </p>
+      </div>
+      <div class="proj-tags">
+        <span class="tag">EfficientNet-B0</span>
+        <span class="tag">Computer Vision</span>
+        <span class="tag">PyTorch</span>
+        <span class="tag">FastAPI</span>
+      </div>
+    </a>
+
+    <!-- Grade Predictor -->
+    <a href="/grade" class="project-card">
+      <div class="proj-top">
+        <div class="proj-icon">📊</div>
+        <div class="proj-arrow">↗</div>
+      </div>
+      <div>
+        <h3 class="proj-title">Student Grade Predictor</h3>
+        <p class="proj-desc">
+          Dự đoán điểm cuối kỳ G3 từ hành vi học tập và thông tin cá nhân. 
+          Hỗ trợ nhiều mô hình: Linear Regression, SVM, Random Forest, KNN.
+        </p>
+      </div>
+      <div class="proj-tags">
+        <span class="tag">Random Forest</span>
+        <span class="tag">Scikit-learn</span>
+        <span class="tag">Tabular ML</span>
+        <span class="tag">FastAPI</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<div class="about-strip" id="about">
+  <div class="about-left">
+    <div class="section-label">Về tôi</div>
+    <h2 class="section-title">Xin chào!</h2>
+  </div>
+  <div>
+    <p class="about-text">
+      Tôi là <strong>Vũ Minh Tân</strong>, một sinh viên đam mê lĩnh vực 
+      <strong>Trí tuệ Nhân tạo</strong> và <strong>Học Máy</strong>. 
+      Tôi thích xây dựng những ứng dụng thực tiễn — từ phân loại hình ảnh 
+      đến dự đoán từ dữ liệu bảng — và biến các mô hình AI thành sản phẩm 
+      có thể dùng được ngay.
+    </p>
+    <div class="skills-row">
+      <span class="skill-chip">Python</span>
+      <span class="skill-chip">PyTorch</span>
+      <span class="skill-chip">Scikit-learn</span>
+      <span class="skill-chip">FastAPI</span>
+      <span class="skill-chip">Computer Vision</span>
+      <span class="skill-chip">Machine Learning</span>
+      <span class="skill-chip">Deep Learning</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="nav-logo">VMT<span style="color:var(--accent)">.</span></div>
+  <p>© 2025 Vũ Minh Tân · Built with FastAPI & AI</p>
+</footer>
+
+</body>
+</html>

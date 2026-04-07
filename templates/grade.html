@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Grade Predictor — Vũ Minh Tân</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: #f5f4f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    .header {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #888;
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      transition: color .15s, border-color .15s;
+      flex-shrink: 0;
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    .back-btn:hover { color: #fff; border-color: #555; }
+
+    .header-divider { width: 1px; height: 28px; background: #333; }
+
+    .header-info h1 { font-size: 20px; font-weight: 600; letter-spacing: -.3px; }
+    .header-info p  { font-size: 12px; color: #777; margin-top: 3px; }
+
+    .model-selector { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .model-selector label { font-size: 11px; color: #666; letter-spacing: .08em; white-space: nowrap; }
+    .model-selector select {
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      color: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 13px;
+      padding: 7px 32px 7px 12px;
+      border-radius: 6px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .main {
+      max-width: 860px;
+      margin: 32px auto 0;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 660px) {
+      .main { grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: flex-start; }
+    }
+
+    .form-card {
+      background: #fff;
+      border: 1px solid #e5e2da;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .form-section {
+      padding: 22px 26px;
+      border-bottom: 1px solid #f0ede6;
+    }
+    .form-section:last-child { border-bottom: none; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 16px;
+    }
+
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 20px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field label { font-size: 12px; font-weight: 500; color: #555; }
+
+    .field select {
+      background: #f8f7f4;
+      border: 1px solid #e5e2da;
+      border-radius: 7px;
+      color: #1a1a1a;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 14px;
+      padding: 9px 34px 9px 12px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: border-color .15s;
+    }
+    .field select:focus { border-color: #1a1a1a; }
+
+    .field-hint { font-size: 11px; color: #bbb; }
+
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row input[type=range] { flex: 1; accent-color: #1a1a1a; cursor: pointer; }
+    .slider-val { font-size: 15px; font-weight: 600; min-width: 30px; text-align: right; color: #1a1a1a; }
+
+    .predict-btn {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .predict-btn:hover  { background: #2f2f2f; }
+    .predict-btn:active { transform: scale(.99); }
+    .predict-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .result-card {
+      background: #fff;
+      border: 1px solid #e5e2da;
+      border-radius: 12px;
+      padding: 24px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .result-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 20px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 0;
+      color: #ccc;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .empty-icon {
+      width: 40px; height: 40px;
+      border: 1.5px dashed #e0ddd6;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+
+    .loading { display: none; justify-content: center; padding: 36px 0; }
+    .loading.on { display: flex; }
+    .spinner {
+      width: 26px; height: 26px;
+      border: 2px solid #eee;
+      border-top-color: #1a1a1a;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .score-display { text-align: center; padding: 24px 0 20px; }
+    .score-big {
+      font-size: 62px;
+      font-weight: 600;
+      letter-spacing: -3px;
+      line-height: 1;
+      color: #1a1a1a;
+    }
+    .score-denom { font-size: 18px; color: #ccc; font-weight: 400; }
+
+    .grade-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-top: 8px;
+    }
+
+    .bar-bg {
+      height: 6px;
+      background: #f0ede6;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width .7s cubic-bezier(.16,1,.3,1), background .3s;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 10px 12px;
+      background: #f8f7f4;
+      border-radius: 7px;
+    }
+    .meta-row span:first-child { color: #999; }
+    .meta-row span:last-child  { font-weight: 500; }
+
+    .error-box {
+      font-size: 12px;
+      color: #c44;
+      background: #fff5f5;
+      border: 1px solid #fccaca;
+      border-radius: 7px;
+      padding: 10px 14px;
+      display: none;
+    }
+    .error-box.show { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="/" class="back-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Portfolio
+    </a>
+    <div class="header-divider"></div>
+    <div class="header-info">
+      <h1>Student Grade Predictor</h1>
+      <p>Dự đoán điểm cuối kỳ G3 từ thông tin học sinh</p>
+    </div>
+  </div>
+  <div class="model-selector">
+    <label>MÔ HÌNH</label>
+    <select id="model-select">
+      <option value="Linear Regression">Linear Regression</option>
+      <option value="SVM (SVR)">SVM (SVR)</option>
+      <option value="Random Forest" selected>Random Forest</option>
+      <option value="KNN">KNN</option>
+    </select>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- FORM -->
+  <div class="form-card">
+
+    <div class="form-section">
+      <div class="section-label">Điểm các kỳ trước</div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>G1 — Điểm kỳ 1 (0–20)</label>
+          <div class="slider-row">
+            <input type="range" id="G1" min="0" max="20" step="0.5" value="14" oninput="sync('G1')">
+            <span class="slider-val" id="G1-v">14</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>G2 — Điểm kỳ 2 (0–20)</label>
+          <div class="slider-row">
+            <input type="range" id="G2" min="0" max="20" step="0.5" value="14" oninput="sync('G2')">
+            <span class="slider-val" id="G2-v">14</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">Hành vi học tập</div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>Failures — Số lần trượt môn</label>
+          <div class="slider-row">
+            <input type="range" id="failures" min="0" max="4" step="1" value="0" oninput="sync('failures')">
+            <span class="slider-val" id="failures-v">0</span>
+          </div>
+          <span class="field-hint">0 = chưa trượt, 4 = 4 lần</span>
+        </div>
+        <div class="field">
+          <label>Higher — Muốn học cao hơn?</label>
+          <select id="higher">
+            <option value="1" selected>Có (Yes)</option>
+            <option value="0">Không (No)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">Thông tin gia đình</div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>Medu — Học vấn mẹ (0–4)</label>
+          <div class="slider-row">
+            <input type="range" id="Medu" min="0" max="4" step="1" value="2" oninput="sync('Medu')">
+            <span class="slider-val" id="Medu-v">2</span>
+          </div>
+          <span class="field-hint">0 = không có &nbsp;·&nbsp; 4 = đại học</span>
+        </div>
+        <div class="field">
+          <label>Fedu — Học vấn cha (0–4)</label>
+          <div class="slider-row">
+            <input type="range" id="Fedu" min="0" max="4" step="1" value="2" oninput="sync('Fedu')">
+            <span class="slider-val" id="Fedu-v">2</span>
+          </div>
+          <span class="field-hint">0 = không có &nbsp;·&nbsp; 4 = đại học</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">Thông tin cá nhân</div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>Walc — Uống rượu</label>
+          <div class="slider-row">
+            <input type="range" id="Walc" min="1" max="5" step="1" value="1" oninput="sync('Walc')">
+            <span class="slider-val" id="Walc-v">1</span>
+          </div>
+          <span class="field-hint">1 = rất ít &nbsp;·&nbsp; 5 = rất nhiều</span>
+        </div>
+        <div class="field">
+          <label>Absences — Số buổi vắng</label>
+          <div class="slider-row">
+            <input type="range" id="absences" min="0" max="93" step="1" value="0" oninput="sync('absences')">
+            <span class="slider-val" id="absences-v">0</span>
+          </div>
+          <span class="field-hint">0 = không vắng &nbsp;·&nbsp; 93 = tối đa</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <button class="predict-btn" id="predict-btn" onclick="predict()">
+        Dự đoán điểm G3
+      </button>
+    </div>
+
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-card">
+    <div class="result-label">Kết quả dự đoán</div>
+
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </div>
+      Nhập thông tin và nhấn<br/><strong style="color:#1a1a1a">Dự đoán</strong> để xem kết quả
+    </div>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="result-body" style="display:none">
+      <div class="score-display">
+        <div>
+          <span class="score-big" id="score-num">—</span>
+          <span class="score-denom"> /20</span>
+        </div>
+        <div id="grade-tag-wrap"></div>
+      </div>
+      <div class="bar-bg">
+        <div class="bar-fill" id="bar-fill"></div>
+      </div>
+      <div class="meta-row">
+        <span>Mô hình</span>
+        <span id="model-used">—</span>
+      </div>
+    </div>
+
+    <div id="error-box" class="error-box"></div>
+  </div>
+
+</div>
+
+<script>
+  function sync(id) {
+    document.getElementById(id + '-v').textContent = document.getElementById(id).value;
+  }
+
+  function payload() {
+    return {
+      Medu:      +document.getElementById('Medu').value,
+      Fedu:      +document.getElementById('Fedu').value,
+      failures:  +document.getElementById('failures').value,
+      higher:    +document.getElementById('higher').value,
+      Walc:      +document.getElementById('Walc').value,
+      absences:  +document.getElementById('absences').value,
+      G1:        +document.getElementById('G1').value,
+      G2:        +document.getElementById('G2').value,
+    };
+  }
+
+  function gradeInfo(s) {
+    if (s >= 16) return { label: 'Xuất sắc', bg: '#e8f5e2', color: '#2e7016' };
+    if (s >= 14) return { label: 'Giỏi',     bg: '#e6f2fb', color: '#1560a0' };
+    if (s >= 10) return { label: 'Trung bình', bg: '#fef7e2', color: '#996800' };
+    return             { label: 'Yếu',  bg: '#fdecea', color: '#b03030' };
+  }
+
+  function barColor(s) {
+    if (s >= 16) return '#2e7016';
+    if (s >= 14) return '#1560a0';
+    if (s >= 10) return '#c98a00';
+    return '#b03030';
+  }
+
+  async function predict() {
+    const btn = document.getElementById('predict-btn');
+    const modelName = document.getElementById('model-select').value;
+
+    btn.disabled = true;
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('result-body').style.display = 'none';
+    document.getElementById('error-box').classList.remove('show');
+    document.getElementById('loading').classList.add('on');
+
+    try {
+      const res = await fetch('/api/grade/predict/' + encodeURIComponent(modelName), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload()),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Lỗi server');
+
+      const score = data.predicted_G3;
+      const info  = gradeInfo(score);
+
+      document.getElementById('score-num').textContent = score.toFixed(2);
+      document.getElementById('model-used').textContent = data.model_name;
+
+      document.getElementById('grade-tag-wrap').innerHTML =
+        `<span class="grade-tag" style="background:${info.bg};color:${info.color}">${info.label}</span>`;
+
+      const bar = document.getElementById('bar-fill');
+      bar.style.width = '0%';
+      bar.style.background = barColor(score);
+      setTimeout(() => { bar.style.width = (score / 20 * 100).toFixed(1) + '%'; }, 40);
+
+      document.getElementById('result-body').style.display = 'block';
+    } catch (e) {
+      const el = document.getElementById('error-box');
+      el.textContent = '⚠ ' + e.message;
+      el.classList.add('show');
+    } finally {
+      document.getElementById('loading').classList.remove('on');
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>

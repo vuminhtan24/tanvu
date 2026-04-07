@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chicken Disease Classifier — Vũ Minh Tân</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --green-50: #f0fdf4; --green-100: #dcfce7; --green-500: #22c55e;
+    --green-600: #16a34a; --green-700: #15803d; --green-900: #14532d;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-400: #9ca3af; --gray-500: #6b7280; --gray-700: #374151;
+    --gray-900: #111827;
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+  body {
+    font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f0;
+    min-height: 100vh;
+    color: var(--gray-900);
+  }
+
+  /* ── Header ── */
+  header {
+    background: #fff;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-500);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    transition: color .15s, border-color .15s;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { color: var(--gray-900); border-color: var(--gray-400); }
+  .divider { width: 1px; height: 28px; background: var(--gray-200); }
+  .logo {
+    width: 36px; height: 36px;
+    background: var(--green-600);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  header h1 { font-size: 16px; font-weight: 600; color: var(--gray-900) }
+  header p  { font-size: 12px; color: var(--gray-500); margin-top: 1px }
+
+  /* ── Layout ── */
+  main {
+    max-width: 960px;
+    margin: 32px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 680px) { main { grid-template-columns: 1fr } }
+
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 16px;
+  }
+
+  /* ── Upload zone ── */
+  #drop-zone {
+    border: 2px dashed var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  #drop-zone.drag { border-color: var(--green-500); background: var(--green-50) }
+  #drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer }
+  .upload-icon {
+    width: 48px; height: 48px;
+    background: var(--green-100);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 22px;
+  }
+  #drop-zone h3 { font-size: 15px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px }
+  #drop-zone p  { font-size: 13px; color: var(--gray-400) }
+
+  /* ── Preview ── */
+  #preview-wrap { display: none; position: relative; margin-top: 16px }
+  #preview-img  {
+    width: 100%; border-radius: var(--radius-sm);
+    max-height: 240px; object-fit: cover;
+    border: 1px solid var(--gray-200);
+  }
+  #clear-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(0,0,0,.55); color: #fff;
+    border: none; border-radius: 50%;
+    width: 28px; height: 28px; cursor: pointer;
+    font-size: 15px; display: flex; align-items: center; justify-content: center;
+  }
+  #analyze-btn {
+    width: 100%; margin-top: 14px;
+    padding: 11px;
+    background: var(--green-600);
+    color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .15s, transform .1s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  #analyze-btn:hover  { background: var(--green-700) }
+  #analyze-btn:active { transform: scale(.98) }
+  #analyze-btn:disabled { background: var(--gray-400); cursor: not-allowed }
+
+  /* ── Result panel ── */
+  #result-card { display: flex; flex-direction: column; gap: 0 }
+
+  #pred-badge {
+    display: none;
+    align-items: center; gap: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    border-left: 4px solid;
+  }
+  #pred-dot  { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0 }
+  #pred-name { font-size: 16px; font-weight: 700 }
+  #pred-vi   { font-size: 13px; opacity: .75; margin-top: 1px }
+  #pred-conf { margin-left: auto; font-size: 22px; font-weight: 700 }
+
+  .bar-row { margin-bottom: 12px }
+  .bar-header {
+    display: flex; justify-content: space-between;
+    font-size: 13px; margin-bottom: 4px;
+  }
+  .bar-label { font-weight: 500; color: var(--gray-700) }
+  .bar-pct   { font-weight: 600 }
+  .bar-bg {
+    height: 8px; background: var(--gray-100);
+    border-radius: 99px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+
+  #pred-desc {
+    display: none;
+    margin-top: 16px; padding: 12px 14px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    font-size: 13px; color: var(--gray-700);
+    line-height: 1.6;
+  }
+
+  #empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 0; color: var(--gray-400); text-align: center;
+  }
+  #empty-state .e-icon { font-size: 36px; margin-bottom: 10px }
+  #empty-state p { font-size: 14px }
+
+  #spinner { display: none; text-align: center; padding: 40px 0 }
+  .spin {
+    width: 36px; height: 36px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--green-500);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  .info-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 680px) { .info-grid { grid-template-columns: 1fr 1fr } }
+  .info-tile {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-200);
+    padding: 14px;
+    border-top: 3px solid;
+  }
+  .info-tile h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px }
+  .info-tile p  { font-size: 12px; color: var(--gray-500); line-height: 1.5 }
+
+  .sev {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 99px; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .sev-none   { background: #dcfce7; color: #15803d }
+  .sev-medium { background: #fef9c3; color: #92400e }
+  .sev-high   { background: #fee2e2; color: #991b1b }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="back-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Portfolio
+  </a>
+  <div class="divider"></div>
+  <div class="logo">🐔</div>
+  <div>
+    <h1>Chicken Disease Classifier</h1>
+    <p>Phân tích bệnh qua ảnh phân gà · EfficientNet-B0</p>
+  </div>
+</header>
+
+<main>
+  <!-- Upload card -->
+  <div class="card">
+    <div class="card-title">Tải ảnh lên</div>
+
+    <div id="drop-zone">
+      <input type="file" id="file-input" accept="image/*">
+      <div class="upload-icon">📷</div>
+      <h3>Kéo thả hoặc chọn ảnh</h3>
+      <p>JPG, PNG, WEBP · Ảnh phân gà cần phân tích</p>
+    </div>
+
+    <div id="preview-wrap">
+      <img id="preview-img" alt="preview">
+      <button id="clear-btn" title="Xóa">✕</button>
+      <button id="analyze-btn">🔍 Phân tích ngay</button>
+    </div>
+  </div>
+
+  <!-- Result card -->
+  <div class="card" id="result-card">
+    <div class="card-title">Kết quả phân tích</div>
+
+    <div id="empty-state">
+      <div class="e-icon">🔬</div>
+      <p>Tải ảnh lên để xem<br>kết quả chẩn đoán</p>
+    </div>
+
+    <div id="spinner">
+      <div class="spin"></div>
+      <p style="font-size:13px;color:var(--gray-500)">Đang phân tích...</p>
+    </div>
+
+    <div id="pred-badge">
+      <div id="pred-dot"></div>
+      <div>
+        <div id="pred-name"></div>
+        <div id="pred-vi"></div>
+      </div>
+      <div id="pred-conf"></div>
+    </div>
+
+    <div id="bars-wrap"></div>
+    <div id="pred-desc"></div>
+  </div>
+
+  <!-- Info tiles -->
+  <div class="info-grid" id="info-grid"></div>
+</main>
+
+<script>
+const CLASS_INFO = {
+  "Coccidiosis":        { vi:"Bệnh Cầu Trùng",   color:"#ef4444", sev:"medium", desc:"Do ký sinh trùng Eimeria. Phân nâu đỏ hoặc lẫn máu. Dùng thuốc kháng cầu trùng theo chỉ định." },
+  "Healthy":            { vi:"Gà Khỏe Mạnh",      color:"#22c55e", sev:"none",   desc:"Không có dấu hiệu bệnh. Tiếp tục duy trì điều kiện chăn nuôi và vệ sinh chuồng trại tốt." },
+  "New Castle Disease": { vi:"Bệnh Newcastle",     color:"#f97316", sev:"high",   desc:"Virus nguy hiểm, lây lan rất nhanh. Cách ly đàn ngay lập tức và báo cơ quan thú y địa phương." },
+  "Salmonella":         { vi:"Bệnh Salmonella",    color:"#eab308", sev:"medium", desc:"Do vi khuẩn Salmonella. Phân thường màu xanh hoặc vàng. Điều trị bằng kháng sinh theo thú y." },
+};
+
+const grid = document.getElementById("info-grid");
+Object.entries(CLASS_INFO).forEach(([cls, info]) => {
+  const sevLabel = { none:"Bình thường", medium:"Cần theo dõi", high:"Nguy hiểm" }[info.sev];
+  const sevClass = "sev sev-" + info.sev;
+  grid.innerHTML += `
+    <div class="info-tile" style="border-top-color:${info.color}">
+      <span class="${sevClass}">${sevLabel}</span>
+      <h4>${cls}</h4>
+      <p style="font-weight:600;color:${info.color};margin-bottom:4px">${info.vi}</p>
+      <p>${info.desc}</p>
+    </div>`;
+});
+
+const dropZone   = document.getElementById("drop-zone");
+const fileInput  = document.getElementById("file-input");
+const previewWrap= document.getElementById("preview-wrap");
+const previewImg = document.getElementById("preview-img");
+const clearBtn   = document.getElementById("clear-btn");
+const analyzeBtn = document.getElementById("analyze-btn");
+let selectedFile = null;
+
+function showPreview(file) {
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  dropZone.style.display = "none";
+  previewWrap.style.display = "block";
+}
+
+fileInput.addEventListener("change", e => { if (e.target.files[0]) showPreview(e.target.files[0]) });
+
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag") });
+dropZone.addEventListener("dragleave", ()=> dropZone.classList.remove("drag"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault(); dropZone.classList.remove("drag");
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith("image/")) showPreview(f);
+});
+
+clearBtn.addEventListener("click", () => {
+  selectedFile = null;
+  fileInput.value = "";
+  previewImg.src = "";
+  dropZone.style.display = "block";
+  previewWrap.style.display = "none";
+  resetResult();
+});
+
+analyzeBtn.addEventListener("click", async () => {
+  if (!selectedFile) return;
+  showLoading();
+
+  const fd = new FormData();
+  fd.append("file", selectedFile);
+
+  try {
+    const res = await fetch("/api/chicken/predict", { method:"POST", body: fd });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Lỗi server");
+    }
+    const data = await res.json();
+    showResult(data);
+  } catch(e) {
+    showError(e.message);
+  }
+});
+
+function showLoading() {
+  document.getElementById("empty-state").style.display = "none";
+  document.getElementById("spinner").style.display = "block";
+  document.getElementById("pred-badge").style.display = "none";
+  document.getElementById("bars-wrap").innerHTML = "";
+  document.getElementById("pred-desc").style.display = "none";
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = "⏳ Đang phân tích...";
+}
+
+function resetResult() {
+  document.getElementById("empty-state").style.display = "flex";
+  document.getElementById("spinner").style.display = "none";
+  document.getElementById("pred-badge").style.display = "none";
+  document.getElementById("bars-wrap").innerHTML = "";
+  document.getElementById("pred-desc").style.display = "none";
+}
+
+function showResult(data) {
+  document.getElementById("spinner").style.display = "none";
+  analyzeBtn.disabled = false;
+  analyzeBtn.textContent = "🔍 Phân tích ngay";
+
+  const info = CLASS_INFO[data.prediction] || { color:"#888", vi:"", desc:"" };
+
+  const badge = document.getElementById("pred-badge");
+  badge.style.display = "flex";
+  badge.style.borderLeftColor = info.color;
+  badge.style.background = info.color + "12";
+  document.getElementById("pred-dot").style.background = info.color;
+  document.getElementById("pred-name").textContent = data.prediction;
+  document.getElementById("pred-name").style.color = info.color;
+  document.getElementById("pred-vi").textContent = info.vi;
+  document.getElementById("pred-conf").textContent = (data.confidence * 100).toFixed(1) + "%";
+  document.getElementById("pred-conf").style.color = info.color;
+
+  const sorted = Object.entries(data.probabilities).sort((a,b) => b[1]-a[1]);
+  const wrap = document.getElementById("bars-wrap");
+  wrap.innerHTML = "";
+  sorted.forEach(([cls, prob]) => {
+    const ci = CLASS_INFO[cls] || { color:"#888" };
+    const pct = (prob * 100).toFixed(1);
+    wrap.innerHTML += `
+      <div class="bar-row">
+        <div class="bar-header">
+          <span class="bar-label">${cls}</span>
+          <span class="bar-pct" style="color:${ci.color}">${pct}%</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill" style="width:${pct}%;background:${ci.color}"></div>
+        </div>
+      </div>`;
+  });
+
+  const desc = document.getElementById("pred-desc");
+  desc.style.display = "block";
+  desc.innerHTML = `<strong>Khuyến nghị:</strong> ${info.desc}`;
+}
+
+function showError(msg) {
+  document.getElementById("spinner").style.display = "none";
+  analyzeBtn.disabled = false;
+  analyzeBtn.textContent = "🔍 Phân tích ngay";
+  const wrap = document.getElementById("bars-wrap");
+  wrap.innerHTML = `<p style="color:#ef4444;font-size:13px;text-align:center;padding:20px 0">⚠️ ${msg}</p>`;
+}
+
+document.addEventListener("paste", (e) => {
+  const items = e.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) showPreview(file);
+      break;
+    }
+  }
+});
+</script>
+</body>
+</html>
