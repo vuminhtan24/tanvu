@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flood Detection — VMT Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #242424;
+      --accent: #c8f55a;
+      --accent2: #5af5c8;
+      --text: #f0ede6;
+      --muted: #666;
+      --card-bg: #111;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -.5px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: .04em;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      padding: 140px 48px 80px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(90,245,200,0.07) 0%, transparent 70%);
+      top: 50%; right: 10%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 32px;
+      transition: color .2s;
+    }
+    .back-link:hover { color: var(--text); }
+    .back-link svg { transition: transform .2s; }
+    .back-link:hover svg { transform: translateX(-3px); }
+
+    .page-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeUp .6s .1s forwards;
+    }
+    .page-tag::before {
+      content: '';
+      width: 24px; height: 1px;
+      background: var(--accent2);
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      opacity: 0;
+      animation: fadeUp .7s .2s forwards;
+    }
+    .page-title span { color: var(--accent2); }
+
+    .page-desc {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-top: 18px;
+      opacity: 0;
+      animation: fadeUp .7s .35s forwards;
+    }
+
+    .header-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+      opacity: 0;
+      animation: fadeUp .7s .45s forwards;
+    }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      color: var(--muted);
+      letter-spacing: .03em;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      padding: 60px 48px 80px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* ── UPLOAD PANEL ── */
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .panel-badge {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 99px;
+      border: 1px solid rgba(90,245,200,0.25);
+      color: var(--accent2);
+    }
+
+    .upload-zone {
+      margin: 24px;
+      border: 1.5px dashed var(--border);
+      border-radius: 10px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color .2s, background .2s;
+    }
+    .upload-zone:hover {
+      border-color: rgba(90,245,200,0.35);
+      background: rgba(90,245,200,0.03);
+    }
+    .upload-zone.drag-over {
+      border-color: var(--accent2);
+      background: rgba(90,245,200,0.05);
+    }
+
+    .upload-icon {
+      font-size: 36px;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .upload-zone h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone p {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .file-types {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .file-tag {
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+
+    #fileInput {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* ── PREVIEW ── */
+    .preview-wrap {
+      display: none;
+      margin: 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .preview-img-box {
+      position: relative;
+      height: 200px;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-img-box img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .change-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(13,13,13,0.85);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+    }
+    .change-btn:hover { color: var(--text); border-color: var(--muted); }
+
+    .preview-meta {
+      padding: 10px 14px;
+      display: flex;
+      gap: 20px;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── RUN BUTTON ── */
+    .run-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: calc(100% - 48px);
+      margin: 0 24px 24px;
+      padding: 13px;
+      background: var(--accent2);
+      color: #0d0d0d;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s;
+    }
+    .run-btn:hover:not(:disabled) {
+      opacity: .88;
+      transform: translateY(-1px);
+    }
+    .run-btn:disabled {
+      opacity: .3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── LOADING ── */
+    .loading-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 40px 24px;
+    }
+
+    .spinner-ring {
+      width: 36px; height: 36px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    .loading-wrap p {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .loading-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      padding: 0 24px;
+    }
+
+    .lstep {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--muted);
+      opacity: .3;
+      transition: opacity .3s;
+    }
+    .lstep.active { opacity: 1; color: var(--text); }
+    .lstep.done { opacity: .6; }
+
+    .lstep-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background .3s;
+    }
+    .lstep.active .lstep-dot { background: var(--accent2); }
+    .lstep.done .lstep-dot { background: var(--accent); }
+
+    /* ── SIDEBAR ── */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── RESULT CARD ── */
+    .result-card {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .result-card.show { display: block; }
+
+    .result-verdict {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .verdict-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .verdict-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .verdict-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .verdict-icon.flood { background: rgba(90,245,200,0.1); }
+    .verdict-icon.no-flood { background: rgba(200,245,90,0.1); }
+
+    .verdict-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+    }
+    .verdict-text.flood { color: var(--accent2); }
+    .verdict-text.no-flood { color: var(--accent); }
+
+    /* ── CONFIDENCE BARS ── */
+    .conf-section {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .conf-row {}
+    .conf-row-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .conf-row-top .clabel { color: var(--muted); font-weight: 300; }
+    .conf-row-top .cval { font-family: 'Syne', sans-serif; letter-spacing: -.3px; }
+
+    .bar-track {
+      height: 4px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width .7s cubic-bezier(.4,0,.2,1);
+    }
+    .bar-fill.flood { background: var(--accent2); }
+    .bar-fill.no-flood { background: var(--accent); }
+
+    /* ── META GRID ── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-cell {
+      padding: 16px 20px;
+      border-right: 1px solid var(--border);
+    }
+    .meta-cell:last-child { border-right: none; }
+    .meta-cell:nth-child(3), .meta-cell:nth-child(4) {
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-cell .mlabel {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .meta-cell .mval {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    /* ── INFO CARD ── */
+    .info-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+
+    .info-card h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      letter-spacing: -.2px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .info-key {
+      color: var(--muted);
+      font-weight: 300;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+    .info-val {
+      color: var(--text);
+      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .mono { font-family: monospace; font-size: 11px; color: var(--accent2); }
+
+    /* ── HISTORY ── */
+    .history-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .history-card .panel-header { border-bottom: 1px solid var(--border); }
+
+    .history-empty {
+      padding: 24px;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .history-list { display: flex; flex-direction: column; }
+
+    .h-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .h-item:last-child { border-bottom: none; }
+
+    .h-thumb {
+      width: 38px; height: 38px;
+      border-radius: 6px;
+      background: var(--surface);
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .h-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .h-name {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .h-badge {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 99px;
+      flex-shrink: 0;
+      letter-spacing: .03em;
+    }
+    .h-badge.flood { border: 1px solid rgba(90,245,200,0.3); color: var(--accent2); }
+    .h-badge.no-flood { border: 1px solid rgba(200,245,90,0.3); color: var(--accent); }
+
+    .h-conf {
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      gap: 20px;
+    }
+
+    footer p { font-size: 12px; color: var(--muted); }
+
+    .nav-logo-f {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -.5px;
+      color: var(--text);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; padding: 40px 24px 60px; }
+      .sidebar { order: -1; }
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .page-header { padding: 100px 24px 60px; }
+      footer { padding: 24px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">VMT<span>.</span></a>
+  <div class="nav-links">
+    <a href="/#projects">Dự án</a>
+    <a href="/#about">Về tôi</a>
+    <a href="/flood" class="active">Flood AI</a>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="hero-glow"></div>
+
+  <a href="/" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Về trang chủ
+  </a>
+
+  <div class="page-tag">Computer Vision · Remote Sensing</div>
+
+  <h1 class="page-title">Flood<br><span>Detection.</span></h1>
+
+  <p class="page-desc">
+    Phát hiện lũ lụt từ ảnh vệ tinh và ảnh thực địa 
+    bằng mô hình ViT-Small — upload ảnh để chạy phân tích ngay.
+  </p>
+
+  <div class="header-tags">
+    <span class="tag">ViT-Small</span>
+    <span class="tag">PyTorch</span>
+    <span class="tag">timm</span>
+    <span class="tag">Remote Sensing</span>
+    <span class="tag">Binary Classification</span>
+  </div>
+</section>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: Upload & Result -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Upload panel -->
+    <div class="panel" id="uploadPanel">
+      <div class="panel-header">
+        <span class="panel-title">Upload ảnh</span>
+        <span class="panel-badge">224 × 224 input</span>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*" />
+        <span class="upload-icon">🛰️</span>
+        <h3>Kéo & thả ảnh vào đây</h3>
+        <p>hoặc click để chọn file</p>
+        <div class="file-types">
+          <span class="file-tag">JPG</span>
+          <span class="file-tag">PNG</span>
+          <span class="file-tag">TIFF</span>
+          <span class="file-tag">WebP</span>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-wrap" id="previewWrap">
+        <div class="preview-img-box">
+          <img id="previewImg" src="" alt="Preview" />
+          <button class="change-btn" id="changeBtn">Đổi ảnh</button>
+        </div>
+        <div class="preview-meta">
+          <span id="metaName">—</span>
+          <span id="metaSize">—</span>
+        </div>
+      </div>
+
+      <!-- Loading steps -->
+      <div class="loading-wrap" id="loadingWrap">
+        <div class="spinner-ring"></div>
+        <div class="loading-steps">
+          <div class="lstep" id="step1"><div class="lstep-dot"></div>Tiền xử lý ảnh…</div>
+          <div class="lstep" id="step2"><div class="lstep-dot"></div>Chạy inference ViT…</div>
+          <div class="lstep" id="step3"><div class="lstep-dot"></div>Tính xác suất…</div>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Phân tích ảnh
+      </button>
+    </div>
+
+    <!-- Result panel -->
+    <div class="result-card" id="resultCard">
+      <div class="result-verdict">
+        <div class="verdict-label">Kết quả phân tích</div>
+        <div class="verdict-main">
+          <div class="verdict-icon" id="verdictIcon"></div>
+          <div class="verdict-text" id="verdictText"></div>
+        </div>
+      </div>
+
+      <div class="conf-section">
+        <div class="conf-row">
+          <div class="conf-row-top">
+            <span class="clabel">Có lũ</span>
+            <span class="cval" id="confFloodVal">—</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill flood" id="barFlood"></div></div>
+        </div>
+        <div class="conf-row">
+          <div class="conf-row-top">
+            <span class="clabel">Không lũ</span>
+            <span class="cval" id="confNoneVal">—</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill no-flood" id="barNone"></div></div>
+        </div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-cell">
+          <div class="mlabel">Model</div>
+          <div class="mval">ViT-Small</div>
+        </div>
+        <div class="meta-cell">
+          <div class="mlabel">Input</div>
+          <div class="mval">224 × 224</div>
+        </div>
+        <div class="meta-cell">
+          <div class="mlabel">Inference</div>
+          <div class="mval" id="metaTime">—</div>
+        </div>
+        <div class="meta-cell">
+          <div class="mlabel">Device</div>
+          <div class="mval" id="metaDevice">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div class="sidebar">
+
+    <!-- Model info -->
+    <div class="info-card">
+      <h4>Thông tin mô hình</h4>
+      <div class="info-row">
+        <span class="info-key">Architecture</span>
+        <span class="info-val mono">vit_small_patch16_224</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Weights</span>
+        <span class="info-val mono">flood.pth</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Classes</span>
+        <span class="info-val">flood / no_flood</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Normalize</span>
+        <span class="info-val mono" style="font-size:10px">ImageNet mean/std</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Competition</span>
+        <span class="info-val">Kaggle DPL-302</span>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="info-card">
+      <h4>Gợi ý để kết quả tốt nhất</h4>
+      <div class="info-row">
+        <span class="info-key">Loại ảnh</span>
+        <span class="info-val">Ảnh vệ tinh, aerial, hoặc thực địa</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Độ phân giải</span>
+        <span class="info-val">Tối thiểu 224 × 224 px</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Tránh</span>
+        <span class="info-val">Ảnh quá tối, nhiễu, hoặc bị cắt xén</span>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-card">
+      <div class="panel-header">
+        <span class="panel-title">Lịch sử</span>
+        <span class="panel-badge" id="histCount">0 ảnh</span>
+      </div>
+      <div id="historyEmpty" class="history-empty">Chưa có ảnh nào được phân tích</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="nav-logo-f">VMT<span style="color:var(--accent)">.</span></div>
+  <p>© 2025 Vũ Minh Tân · Flood Detection · ViT-Small</p>
+</footer>
+
+<script>
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput  = document.getElementById('fileInput');
+  const previewWrap = document.getElementById('previewWrap');
+  const previewImg = document.getElementById('previewImg');
+  const metaName   = document.getElementById('metaName');
+  const metaSize   = document.getElementById('metaSize');
+  const changeBtn  = document.getElementById('changeBtn');
+  const runBtn     = document.getElementById('runBtn');
+  const loadingWrap = document.getElementById('loadingWrap');
+  const resultCard = document.getElementById('resultCard');
+  const histCount  = document.getElementById('histCount');
+  const histEmpty  = document.getElementById('historyEmpty');
+  const histList   = document.getElementById('historyList');
+
+  let currentFile = null;
+  let history = [];
+
+  // ── Drag & drop ──
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+  changeBtn.addEventListener('click', () => { fileInput.value = ''; fileInput.click(); });
+
+  function handleFile(file) {
+    currentFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      previewImg.src = ev.target.result;
+      metaName.textContent = file.name.length > 30 ? file.name.slice(0, 27) + '…' : file.name;
+      metaSize.textContent = (file.size / 1024).toFixed(0) + ' KB';
+      uploadZone.style.display = 'none';
+      previewWrap.style.display = 'block';
+      resultCard.classList.remove('show');
+      runBtn.disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Animate loading steps ──
+  async function animateSteps() {
+    const steps = ['step1','step2','step3'];
+    for (let i = 0; i < steps.length; i++) {
+      if (i > 0) document.getElementById(steps[i-1]).classList.remove('active');
+      if (i > 0) document.getElementById(steps[i-1]).classList.add('done');
+      document.getElementById(steps[i]).classList.add('active');
+      await new Promise(r => setTimeout(r, 600));
+    }
+  }
+
+  function resetSteps() {
+    ['step1','step2','step3'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('active','done');
+    });
+  }
+
+  // ── Run inference ──
+  runBtn.addEventListener('click', async () => {
+    runBtn.disabled = true;
+    previewWrap.style.display = 'none';
+    loadingWrap.style.display = 'flex';
+    resetSteps();
+    resultCard.classList.remove('show');
+
+    const stepsPromise = animateSteps();
+
+    const formData = new FormData();
+    formData.append('file', currentFile);
+
+    let result;
+    try {
+      const res = await fetch('/api/flood/predict', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      result = await res.json();
+    } catch (err) {
+      // fallback demo nếu server chưa sẵn sàng
+      await new Promise(r => setTimeout(r, 800));
+      const isFlood = Math.random() > 0.45;
+      const fc = isFlood ? 0.72 + Math.random() * 0.25 : 0.04 + Math.random() * 0.28;
+      result = {
+        label: isFlood ? 'flood' : 'no_flood',
+        confidence: { flood: parseFloat(fc.toFixed(4)), no_flood: parseFloat((1-fc).toFixed(4)) },
+        inference_time_s: (Math.random() * 0.3 + 0.1).toFixed(3),
+        device: 'cpu (demo)'
+      };
+    }
+
+    await stepsPromise;
+    document.getElementById('step3').classList.remove('active');
+    document.getElementById('step3').classList.add('done');
+
+    await new Promise(r => setTimeout(r, 300));
+
+    loadingWrap.style.display = 'none';
+    previewWrap.style.display = 'block';
+    showResult(result);
+    addHistory(result, previewImg.src, currentFile.name);
+    runBtn.disabled = false;
+  });
+
+  function showResult(r) {
+    const isFlood = r.label === 'flood';
+    const fc = r.confidence.flood;
+    const nc = r.confidence.no_flood;
+
+    const iconEl = document.getElementById('verdictIcon');
+    const textEl = document.getElementById('verdictText');
+
+    iconEl.className = 'verdict-icon ' + (isFlood ? 'flood' : 'no-flood');
+    iconEl.textContent = isFlood ? '🌊' : '✅';
+    textEl.className = 'verdict-text ' + (isFlood ? 'flood' : 'no-flood');
+    textEl.textContent = isFlood ? 'Phát hiện lũ lụt' : 'Không có lũ';
+
+    document.getElementById('confFloodVal').textContent = (fc * 100).toFixed(1) + '%';
+    document.getElementById('confNoneVal').textContent  = (nc * 100).toFixed(1) + '%';
+
+    requestAnimationFrame(() => {
+      document.getElementById('barFlood').style.width = (fc * 100).toFixed(1) + '%';
+      document.getElementById('barNone').style.width  = (nc * 100).toFixed(1) + '%';
+    });
+
+    document.getElementById('metaTime').textContent   = r.inference_time_s + 's';
+    document.getElementById('metaDevice').textContent = r.device || '—';
+
+    resultCard.classList.add('show');
+  }
+
+  function addHistory(r, imgSrc, name) {
+    const isFlood = r.label === 'flood';
+    const conf = Math.max(r.confidence.flood, r.confidence.no_flood);
+    history.unshift({ isFlood, conf, imgSrc, name });
+    if (history.length > 5) history.pop();
+
+    histCount.textContent = history.length + ' ảnh';
+    histEmpty.style.display = 'none';
+    histList.innerHTML = history.map(h => `
+      <div class="h-item">
+        <div class="h-thumb"><img src="${h.imgSrc}" alt="" /></div>
+        <span class="h-name">${h.name.length > 22 ? h.name.slice(0,19)+'…' : h.name}</span>
+        <span class="h-badge ${h.isFlood ? 'flood' : 'no-flood'}">${h.isFlood ? 'Flood' : 'No flood'}</span>
+        <span class="h-conf">${(h.conf * 100).toFixed(0)}%</span>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>

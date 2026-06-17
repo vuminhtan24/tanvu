@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from routes.flood import router as flood_router 
 import os
 
 from routes.chicken import router as chicken_router
@@ -14,7 +15,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # ── Include API routers ───────────────────────────────────────────────────────
 app.include_router(chicken_router)
 app.include_router(grade_router)
-
+app.include_router(flood_router)
 # ── Helper để đọc template ────────────────────────────────────────────────────
 def read_template(name: str) -> str:
     path = os.path.join("templates", name)
@@ -33,6 +34,10 @@ async def chicken_page():
 @app.get("/grade", response_class=HTMLResponse)
 async def grade_page():
     return read_template("grade.html")
+
+@app.get("/flood", response_class=HTMLResponse)
+async def flood_page():
+    return read_template("flood.html")
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
